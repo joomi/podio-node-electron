@@ -23,6 +23,22 @@ function getFullURL(req) {
   return req.protocol + '://' + req.get('host') + '/';
 }
 
+function getDate(){
+
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1; //January is 0!
+
+    var yyyy = today.getFullYear();
+    if(dd<10){
+        dd='0'+dd
+    }
+    if(mm<10){
+        mm='0'+mm
+    }
+    return yyyy+'-'+mm+'-'+dd;
+}
+
 /* GET home page. */
 router.get('/', function(req, res) {
     var authCode = req.query.code;
@@ -55,12 +71,13 @@ router.get('/', function(req, res) {
 });
 
 router.get('/chk', function(req, res) {
-  var authCode = req.query.code;
-  var errorCode = req.query.error;
-  var redirectURL = getFullURL(req);
+    var authCode = req.query.code;
+    var errorCode = req.query.error;
+    var redirectURL = getFullURL(req);
 
-    podio.isAuthenticated().
-        then(function () {
+
+    podio.isAuthenticated()
+        .then(function () {
             // ready to make API calls
             res.redirect('/form');
         })
@@ -82,17 +99,56 @@ router.get('/chk', function(req, res) {
 });
 
 router.get('/form', function(req, res) {
-    var app_id = 5939966;
+    var clock_app_id = 15691145;
+    var user;
+    var options;
+
     podio.isAuthenticated()
         .then(function() {
-            return podio.request('post', '/item/app/'+app_id+'/filter/');
+            return podio.request('get', '/user/status');
         })
         .then(function(responseData) {
-            res.render('form', { response: responseData });
+            user = responseData.profile;
         })
+        .then(function() {
+            options = {
+                "limit" : 2,
+                "filters" : {
+                    "created_by": {"type": "user", "id": user.profile_id},
+                    "created_on": {"from": getDate()}
+                }
+            };
+
+            return podio.request('post', '/item/app/'+clock_app_id+'/filter/', options);
+        })
+        .then(function(responseData2) {
+            res.render('form', { response: JSON.stringify(responseData2.items )});
+        })
+        .catch(function(err) {
+            res.send(401);
+        });
+    return;
+
+    /*var app_id = 5939966;
+    var options = {
+        "limit": 3,
+        "sort_by": "date"
+    };
+
+    podio.isAuthenticated()
+        .then(function() {
+            return podio.request('post', '/item/app/'+app_id+'/filter/', options);
+        })
+        .then(function(responseData) {
+            console.log(responseData);
+            res.render('form', { response: JSON.stringify(responseData.items )});
+        })
+        .catch(function(err) {
+            res.send(401);
+        });*/
 });
 
-router.get('/user', function(req, res) {
+/*router.get('/user', function(req, res) {
     console.log("user " + res);
   podio.isAuthenticated()
   .then(function() {
@@ -104,9 +160,9 @@ router.get('/user', function(req, res) {
   .catch(function(err) {
     res.send(401);
   });
-});
+});*/
 
-router.get('/upload', function(req, res) {
+/*router.get('/upload', function(req, res) {
   res.render('upload');
 });
 
@@ -142,6 +198,6 @@ router.post('/upload', function(req, res) {
   .catch(function () {
     res.send(401);
   });
-});
+});*/
 
 module.exports = router;
