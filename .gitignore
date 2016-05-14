@@ -8,3 +8,4 @@ Thumbs.db
 /tmp/
 config.json
 /app/trash
+*.php
