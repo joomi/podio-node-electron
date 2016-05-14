@@ -25,29 +25,21 @@ function getFullURL(req) {
 
 /* GET home page. */
 router.get('/', function(req, res) {
-    console.log("success XXss");
     var authCode = req.query.code;
     var errorCode = req.query.error;
     var redirectURL = getFullURL(req);
-    var app_id = 5939966;
-    console.log("success XX");
+
     if (typeof authCode !== 'undefined') {
         podio.isAuthenticated()
-            .then(function () {
-                return podio.request('get', '/item/app/'+app_id+'/filter/');
-            })
             .then(function(responseData) {
-                console.log(responseData);
-                res.render('success', { response: responseData });
-
+                res.redirect('/form');
             })
             .catch(function () {
 
                 if (typeof authCode !== 'undefined') {
                     podio.getAccessToken(authCode, redirectURL, function (err) {
                         // we are ready to make API calls
-                        console.log("success");
-                        res.render('success');
+                        res.redirect('/form');
                     });
                 } else if (typeof errorCode !== 'undefined') {
                     // an error occured
@@ -66,20 +58,18 @@ router.get('/chk', function(req, res) {
   var authCode = req.query.code;
   var errorCode = req.query.error;
   var redirectURL = getFullURL(req);
-    var app_id = 5939966;
-    podio.isAuthenticated().then(function () {
-        return podio.request('get', '/item/app/'+app_id+'/filter/');
-        })
-        .then(function(responseData) {
-            console.log(responseData);
-            res.render('success', { response: responseData });
+
+    podio.isAuthenticated().
+        then(function () {
+            // ready to make API calls
+            res.redirect('/form');
         })
         .catch(function () {
 
             if (typeof authCode !== 'undefined') {
                 podio.getAccessToken(authCode, redirectURL, function (err) {
                     // we are ready to make API calls
-                    res.render('success');
+                    res.redirect('/form');
                 });
             } else if (typeof errorCode !== 'undefined') {
                 // an error occured
@@ -89,6 +79,17 @@ router.get('/chk', function(req, res) {
                 res.render('index', { authUrl: podio.getAuthorizationURL(redirectURL) });
             }
         });
+});
+
+router.get('/form', function(req, res) {
+    var app_id = 5939966;
+    podio.isAuthenticated()
+        .then(function() {
+            return podio.request('post', '/item/app/'+app_id+'/filter/');
+        })
+        .then(function(responseData) {
+            res.render('form', { response: responseData });
+        })
 });
 
 router.get('/user', function(req, res) {
